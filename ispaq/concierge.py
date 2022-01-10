@@ -1077,7 +1077,7 @@ class Concierge(object):
                             
                         py_stream = obspy.read(filepath)
                         py_stream = py_stream.slice(_starttime, _endtime, nearest_sample=False)
-                      
+                        py_stream.merge(method=1)
                         if (StrictVersion(obspy.__version__) < StrictVersion("1.1.0")): 
                             flag_dict = obspy.io.mseed.util.get_timing_and_data_quality(filepath)
                             act_flags = [0,0,0,0,0,0,0,0] # not supported before 1.1.0  
@@ -1193,6 +1193,7 @@ class Concierge(object):
                     if not inclusiveEnd:
                             _endtime = _endtime - 0.000001
                     py_stream = py_stream.slice(_starttime, _endtime, nearest_sample=False) 
+                    py_stream.merge(method=1)
                     # NOTE:  ObsPy does not store state-of-health flags with each stream.
                     if (StrictVersion(obspy.__version__) < StrictVersion("1.1.0")):
                         flag_dict = obspy.io.mseed.util.get_timing_and_data_quality(filepath)
