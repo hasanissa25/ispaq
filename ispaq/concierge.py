@@ -1065,7 +1065,10 @@ class Concierge(object):
                         self.logger.debug("read local miniseed file for %s..." % filepath)
                         py_stream = obspy.read(filepath)
                         py_stream = py_stream.slice(_starttime, _endtime, nearest_sample=False)
-                      
+                        # Importing waveform data containing gaps or overlaps results into a Stream object with multiple traces having the same identifier. This method tries to merge such traces inplace.
+                        # "method= 1" discards data of the previous trace assuming the following trace contains data with a more correct time value.
+                        py_stream.merge(method=1)
+
                         if (StrictVersion(obspy.__version__) < StrictVersion("1.1.0")): 
                             flag_dict = obspy.io.mseed.util.get_timing_and_data_quality(filepath)
                             act_flags = [0,0,0,0,0,0,0,0] # not supported before 1.1.0  
@@ -1181,6 +1184,10 @@ class Concierge(object):
                     if not inclusiveEnd:
                             _endtime = _endtime - 0.000001
                     py_stream = py_stream.slice(_starttime, _endtime, nearest_sample=False) 
+                    # Importing waveform data containing gaps or overlaps results into a Stream object with multiple traces having the same identifier. This method tries to merge such traces inplace.
+                    # "method= 1" discards data of the previous trace assuming the following trace contains data with a more correct time value.
+                    py_stream.merge(method=1)
+
                     # NOTE:  ObsPy does not store state-of-health flags with each stream.
                     if (StrictVersion(obspy.__version__) < StrictVersion("1.1.0")):
                         flag_dict = obspy.io.mseed.util.get_timing_and_data_quality(filepath)
