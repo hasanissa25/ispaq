@@ -390,7 +390,6 @@ class Concierge(object):
         self.logger.debug("metric_names %s", self.metric_names)
         self.logger.debug("sncl_patterns %s", self.sncl_patterns)
         self.logger.debug("dataselect_url %s", self.dataselect_url)
-        self.logger.debug("dataselect_type %s", self.dataselect_type)
         self.logger.debug("station_url %s", self.station_url)
         self.logger.debug("event_url %s", self.event_url)
         self.logger.debug("resp_dir %s", self.resp_dir)
@@ -1042,18 +1041,6 @@ class Concierge(object):
                     for fname in fnmatch.filter(fnames, fpattern1) + fnmatch.filter(fnames, fpattern2):
                         matching_files.append(os.path.join(root,fname))
 
-#                 if (len(matching_files) == 0):
-#                     self.logger.info("No files found matching '%s'" % (fpattern1))
-#                     py_stream = obspy.read()
-#                     
-#                 else:
-#                 filepath=matching_files[0]
-
-#                 if (len(matching_files) > 1):
-#                     filepath=matching_files[0]
-#                     self.logger.debug("Multiple files found: %s" % " ".join(matching_files))
-#                     self.logger.warning("Multiple files found matching " '%s -- using %s' % (fpattern1, filepath))
-                    
                 try:
                     # Get the ObsPy version of the stream
 
@@ -1075,9 +1062,13 @@ class Concierge(object):
                         if not inclusiveEnd:
                             _endtime = _endtime - 0.000001
                             
+                        self.logger.debug("read local miniseed file for %s..." % filepath)
                         py_stream = obspy.read(filepath)
                         py_stream = py_stream.slice(_starttime, _endtime, nearest_sample=False)
+                        # Importing waveform data containing gaps or overlaps results into a Stream object with multiple traces having the same identifier. This method tries to merge such traces inplace.
+                        # "method= 1" discards data of the previous trace assuming the following trace contains data with a more correct time value.
                         py_stream.merge(method=1)
+
                         if (StrictVersion(obspy.__version__) < StrictVersion("1.1.0")): 
                             flag_dict = obspy.io.mseed.util.get_timing_and_data_quality(filepath)
                             act_flags = [0,0,0,0,0,0,0,0] # not supported before 1.1.0  
@@ -1105,7 +1096,6 @@ class Concierge(object):
                     availability = self.get_availability("dummy", network, station, location, channel, _starttime, _endtime)
                     
                     if availability is None:
-#                     if availability.empty: 
                         raise Exception('No Data')
                         return None
  
@@ -1129,7 +1119,6 @@ class Concierge(object):
                     azimuth = availability.azimuth[0]
                     dip = availability.dip[0]
                         
-                       
                     # Create the IRISSeismic version of the stream
                     r_stream = irisseismic.R_Stream(py_stream, _starttime, _endtime, act_flags, io_flags, dq_flags, timing_qual,
 						sensor, scale, scalefreq, scaleunits, latitude, longitude, elevation, depth, azimuth, dip)
@@ -1162,10 +1151,12 @@ class Concierge(object):
                         end = _endtime
 
                     _sncl_pattern = self.get_sncl_pattern(network, station, location, channel)
+
                     if(self.sds_files):
-                        filename = '%s.D.%s' % (_sncl_pattern,_starttime.strftime('%Y.%j'))  #seiscomp sds file naming
+                        filename = '%s.D.%s' % (_sncl_pattern,start.strftime('%Y.%j'))  #seiscomp sds file naming
                     else:
-                        filename = '%s.%s' % (_sncl_pattern,_starttime.strftime('%Y.%j'))
+                        filename = '%s.%s' % (_sncl_pattern,start.strftime('%Y.%j'))
+
                     self.logger.debug("read local miniseed file for %s..." % filename)
                     fpattern1 = self.dataselect_url + '/' + filename 
                     fpattern2 = fpattern1 + '.[A-Z]'
@@ -1193,7 +1184,10 @@ class Concierge(object):
                     if not inclusiveEnd:
                             _endtime = _endtime - 0.000001
                     py_stream = py_stream.slice(_starttime, _endtime, nearest_sample=False) 
+                    # Importing waveform data containing gaps or overlaps results into a Stream object with multiple traces having the same identifier. This method tries to merge such traces inplace.
+                    # "method= 1" discards data of the previous trace assuming the following trace contains data with a more correct time value.
                     py_stream.merge(method=1)
+
                     # NOTE:  ObsPy does not store state-of-health flags with each stream.
                     if (StrictVersion(obspy.__version__) < StrictVersion("1.1.0")):
                         flag_dict = obspy.io.mseed.util.get_timing_and_data_quality(filepath)

@@ -410,7 +410,7 @@ def _userAgent():
     Create user agent string for use with new("IrisClient")
     """
     #ispaq_version = ispaq.__version__
-    ispaq_version = '3.0.1-beta'
+    ispaq_version = '3.1.0-beta'
     r_agent_string = ro.r("paste0('IRISSeismic/',installed.packages()['IRISSeismic','Version'],' RCurl/',installed.packages()['RCurl','Version'],' R/',R.version$major,'.',R.version$minor,' ',version$platform,' ISPAQ/')")
     return(r_agent_string[0]+ispaq_version)
 
@@ -629,12 +629,8 @@ def getEvalresp(client_url="http://service.iris.edu",
          azimuth  backAzimuth  distance
     1  241.57595     47.88017  39.97257
     """
-    #r_client = ro.r('new("IrisClient")')
-
 
     user_agent = _userAgent()
-#     cmd = 'new("IrisClient", site="' + client_url + '", service_type="' + client_type + '", useragent="' + user_agent + '")'
-    
     cmd = f'new("IrisClient", site="{client_url}", service_type="{client_type}", useragent="{user_agent}")'
     r_client = ro.r(cmd)
     
